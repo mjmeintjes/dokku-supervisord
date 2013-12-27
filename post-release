@@ -20,7 +20,8 @@ while read line || [ -n "\$line" ]; do
   command=\${line#*: }
   cat << CONF >> supervisord.conf
 [program:\${name}]
-command=/exec sh -c "\${command}"
+directory=/app
+command=\${command}
 autostart=true
 autorestart=true
 stopsignal=QUIT
@@ -38,7 +39,8 @@ set -e
 
 echo "-----> Injecting Supervisor ..."
 
-id=$(echo "$runner" | docker run -i -a stdin $IMAGE /bin/bash -c "cat > /start && apt-get update && apt-get install -y supervisor && apt-get clean")
+id=$(echo "$runner" | docker run -i -a stdin $IMAGE /bin/bash -c "cat > /start && apt-get update && apt-get install -y supervisor && apt-get clean && chmod +x /start")
 docker attach $id
 test $(docker wait $id) -eq 0
+
 docker commit $id $IMAGE > /dev/null
